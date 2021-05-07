@@ -134,8 +134,8 @@ map.drawmapboundary()
 x,y = map(128.25, 34.5)
 map.plot(x, y, 'ro', alpha=0.4 ,markersize=12)  
 
-# x, y = map(127.3, 37)
-# plt.text(x, y, 'KOREA', size=15)
+x, y = map(127.3, 37)
+plt.text(x, y, 'KOREA', size=15)
 
 plt.show()
 
