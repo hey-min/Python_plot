@@ -31,6 +31,7 @@ dtime = num2date(times, units)
 # time to dataframe file
 df = pd.DataFrame(None, columns=['date'])
 df['date'] = dtime
+df['date'] = pd.to_datetime(df['date'])
 df['date_year'] = df['date'].dt.year
 
 
@@ -41,16 +42,17 @@ ls_index = df_time.index
 
 sst_list = []
 date_list = []
-lat, lon = 26, 33
+_lat, _lon = 26, 33
 
 for l in ls_index:
-    sst_list.append(sst[l, lat, lon]-273.15)
+    sst_list.append(sst[l, _lat, _lon]-273.15)
     date_list.append(df['date'].loc[l])
-    
+
+   
 # draw time series graph
 fig1 = plt.figure(figsize=(16, 10))
 plt.rc('font', family='times new roman', size=20)
-plt.title('SST of Pixel ['+str(lat)+']['+str(lon)+']', pad=20)
+plt.title('SST of Pixel ['+str(_lat)+']['+str(_lon)+']', pad=20)
 plt.plot(date_list, sst_list, color='black', label='SST(ºC)', linewidth=1)
 plt.axhline(y=28, xmin=0, xmax=1)
 plt.legend(loc='lower right')
@@ -81,13 +83,13 @@ sst_list = []
 date_list = []
 
 for l in ls_index:
-    sst_list.append(sst[l, lat, lon]-273.15)
+    sst_list.append(sst[l, _lat, _lon]-273.15)
     date_list.append(df['date'].loc[l])
     
 # draw time series graph
 fig2 = plt.figure(figsize=(16, 10))
 plt.rc('font', family='times new roman', size=20)
-plt.title('SST of Pixel ['+str(lat)+']['+str(lon)+']', pad=20)
+plt.title('SST of Pixel ['+str(_lat)+']['+str(_lon)+']', pad=20)
 plt.plot(date_list, sst_list, color='black', label='SST(ºC)', linewidth=1)
 plt.axhline(y=28, xmin=0, xmax=1)
 plt.legend(loc='lower right')
@@ -113,7 +115,7 @@ print('File Save: ' + f_name)
     
 
 # target area plot
-fig3 = plt.figure(1, figsize=(10, 8))
+fig3 = plt.figure(figsize=(16, 10))
 ax = plt.gca()
 plt.rc('font', family='times new roman', size=20)
 plt.title('Study Area', weight='bold', ha='center', pad=10)
@@ -132,7 +134,7 @@ map.drawmeridians(merdians, labels=[0,0,0,1], linewidth=0.8,color='white')
 map.drawmapboundary()
 
 x,y = map(128.25, 34.5)
-map.plot(x, y, 'ro', alpha=0.4 ,markersize=12)  
+map.plot(x, y, 'ro', alpha=0.4 ,markersize=15)  
 
 x, y = map(127.3, 37)
 plt.text(x, y, 'KOREA', size=15)
@@ -147,19 +149,19 @@ print('File Save: ' + f_name)
 
 
 # zoom in target area plot
-# plt.figure(figsize=(10, 8))
+plt.figure(figsize=(10, 8))
 
-# map = Basemap(projection='merc', resolution='h',
-#               urcrnrlat=36, llcrnrlat=33, llcrnrlon=125, urcrnrlon=131)
+map = Basemap(projection='merc', resolution='h',
+              urcrnrlat=36, llcrnrlat=33, llcrnrlon=125, urcrnrlon=131)
 
-# map.drawcoastlines(linewidth=0.8)
-# map.fillcontinents(color='lightgrey')
+map.drawcoastlines(linewidth=0.8)
+map.fillcontinents(color='lightgrey')
 
-# x,y = map(128.25, 34.5)
-# map.plot(x, y, 'ro', alpha=0.4 ,markersize=25)  
+x,y = map(128.25, 34.5)
+map.plot(x, y, 'ro', alpha=0.4 ,markersize=25)  
 
-# plt.show()
+plt.show()
 
-# f_name = 'study area zoom.png'
-# plt.savefig(f_name, bbox_inches='tight')
-# print('File Save: ' + f_name)
+f_name = 'study area zoom.png'
+plt.savefig(f_name, bbox_inches='tight')
+print('File Save: ' + f_name)
