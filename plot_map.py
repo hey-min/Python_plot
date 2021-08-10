@@ -10,7 +10,7 @@ import pandas as pd
 import datetime
 
 
-# open nc file
+# 1) open nc file
 url = '2007to2019.nc'
 nc = Dataset(url, mode='r')
 
@@ -30,6 +30,155 @@ df['date'] = pd.to_datetime(df['date'])
 df['date_year'] = df['date'].dt.year
 
 
+# 2) Open version2 nc file
+
+from netCDF4 import Dataset, num2date
+
+file = '2007to2019_sst_temp_press.pickle.nc'
+nc = Dataset(file)
+
+nc_lat = nc.variables['latitude'][:]
+nc_lon = nc.variables['longitude'][:]
+nctime = nc.variables['time'][:]
+t_unit = nc.variables['time'].units
+t_cal = nc.variables['time'].calendar
+nc_time = num2date(nctime,units = t_unit,calendar = t_cal)
+nc_sst = nc.variables['sst'][:]
+nc_skt = nc.variables['skt'][:]
+nc_sp = nc.variables['sp'][:]
+
+find_date = datetime.datetime(2019,8,10,12,0)
+_id = np.where(nc_time==find_date)[0][0]
+
+df1 = pd.DataFrame(nc_sst[_id]-273.15).to_numpy()
+df2 = pd.DataFrame(nc_skt[_id]-273.15).to_numpy()
+df3 = pd.DataFrame(nc_sp[_id]).to_numpy()
+
+def draw_map_SST(title_type='', df=''):
+    
+    import matplotlib.pyplot as plt
+    import matplotlib.offsetbox as offsetbox
+    from mpl_toolkits.basemap import Basemap
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+
+    # x = df.flatten()
+    # x = x[~np.isnan(x)]
+    
+    plt.figure(figsize=(20, 16))
+    ax = plt.gca()
+
+    plt.rc('font', size=25)
+    
+    month_str = find_date.month
+    plt.title(title_type, loc='left', pad=20)
+    plt.title('10 Aug 2019 12:00', loc='right', pad=20)
+
+    map = Basemap(projection='merc', resolution='h', 
+                  urcrnrlat=np.nanmax(nc_lat)+0.125, llcrnrlat=np.nanmin(nc_lat)-0.125,
+                  urcrnrlon=np.nanmax(nc_lon)+0.125, llcrnrlon=np.nanmin(nc_lon)-0.125)
+
+    map.drawcoastlines(linewidth=0.8)
+    
+    map.fillcontinents(color='lightgrey')
+    
+    parallels = np.arange(np.nanmin(nc_lat)+1, np.nanmax(nc_lat), 2)
+    
+    map.drawparallels(parallels, labels=[1,0,0,0], linewidth=0.8,color='white')
+    
+    merdians = np.arange(np.nanmin(nc_lon)+3, np.nanmax(nc_lon), 3)
+    map.drawmeridians(merdians, labels=[0,0,0,1], linewidth=0.8,color='white')
+    
+    map.drawmapboundary()
+    
+    
+
+    # tb_data = 'Real Average '+title_type
+    # text_left = offsetbox.AnchoredText(tb_data, loc='upper left')
+    # ax.add_artist(text_left)
+    
+    
+    lons, lats = np.meshgrid(nc_lon, nc_lat)
+    x,y = map(lons, lats)
+    
+    cmap = plt.get_cmap('jet')
+    _vmin = 20
+    _vmax = 30
+    levels = np.arange(_vmin, _vmax+1, 2)
+        
+    img = map.pcolormesh(x, y, df, cmap=cmap, shading='gouraud')
+    img.set_clim(vmin=_vmin, vmax=_vmax)
+    
+    divider = make_axes_locatable(ax)
+    
+    # 하단 colorbar 배치
+    cax = divider.append_axes('bottom', size='5%', pad='10%')
+    cbar = plt.colorbar(img, ticks=levels, cax=cax, orientation='horizontal', extend='both')
+    cbar.set_label(label='Temperature[℃]', labelpad=10)
+    # cbar.set_label(label='Pressure [Pa]', labelpad=10)
+
+    plt.show()
+
+
+def draw_map_sp(df=''):
+    
+    import matplotlib.pyplot as plt
+    import matplotlib.offsetbox as offsetbox
+    from mpl_toolkits.basemap import Basemap
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+    plt.figure(figsize=(20, 16))
+    ax = plt.gca()
+
+    plt.rc('font', size=25)
+    
+    plt.title('Surface Pressure', loc='left', pad=20)
+    plt.title('10 Aug 2019 12:00', loc='right', pad=20)
+
+    map = Basemap(projection='merc', resolution='h', 
+                  urcrnrlat=np.nanmax(nc_lat)+0.125, llcrnrlat=np.nanmin(nc_lat)-0.125,
+                  urcrnrlon=np.nanmax(nc_lon)+0.125, llcrnrlon=np.nanmin(nc_lon)-0.125)
+
+    map.drawcoastlines(linewidth=0.8)
+    
+    map.fillcontinents(color='lightgrey')
+    
+    parallels = np.arange(np.nanmin(nc_lat)+1, np.nanmax(nc_lat), 2)
+    
+    map.drawparallels(parallels, labels=[1,0,0,0], linewidth=0.8,color='white')
+    
+    merdians = np.arange(np.nanmin(nc_lon)+3, np.nanmax(nc_lon), 3)
+    map.drawmeridians(merdians, labels=[0,0,0,1], linewidth=0.8,color='white')
+    
+    map.drawmapboundary()
+    
+
+    
+    lons, lats = np.meshgrid(nc_lon, nc_lat)
+    x,y = map(lons, lats)
+    
+    cmap = plt.get_cmap('jet')
+    map.pcolormesh(x, y, df, cmap=cmap, shading='gouraud')
+    
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes('bottom', size='5%', pad='10%')
+    
+    cbar = plt.colorbar(cax=cax, orientation='horizontal', extend='both')
+
+    cbar.set_label(label='Pressure [Pa]', labelpad=10)
+
+    plt.show()
+
+
+# draw_map(title_type='Sea Surface Temperautre', df=df1)
+# draw_map(title_type='Skin Temperautre', df=df2)
+
+draw_map_sp(df=df3)
+
+
+
+
+'''
 # time series graph for target area
 # periods : 2016~2019
 df_time = df.loc[df['date_year']>2015]
@@ -38,6 +187,7 @@ ls_index = df_time.index
 sst_list = []
 date_list = []
 _lat, _lon = 26, 33
+
 
 for l in ls_index:
     sst_list.append(sst[l, _lat, _lon]-273.15)
@@ -104,15 +254,13 @@ plt.show()
 f_name = 'time series '+str(year)+'.png'
 plt.savefig(f_name, bbox_inches='tight')
 print('File Save: ' + f_name)
-
-    
-    
+ 
     
 
 # target area plot
 fig3 = plt.figure(figsize=(16, 10))
 ax = plt.gca()
-plt.rc('font', family='times new roman', size=20)
+plt.rc('font', size=25)
 plt.title('Study Area', weight='bold', ha='center', pad=10)
 
 map = Basemap(projection='merc', resolution='h', 
@@ -128,18 +276,16 @@ merdians = np.arange(np.nanmin(lon)+3, np.nanmax(lon), 3)
 map.drawmeridians(merdians, labels=[0,0,0,1], linewidth=0.8,color='white')
 map.drawmapboundary()
 
-x,y = map(128.25, 34.5)
+x,y = map(lon[_lon], lat[_lat])
 map.plot(x, y, 'ro', alpha=0.4 ,markersize=15)  
 
 x, y = map(127.3, 37)
 plt.text(x, y, 'KOREA', size=15)
 
-plt.show()
-
 f_name = 'study area.png'
 plt.savefig(f_name, bbox_inches='tight')
 print('File Save: ' + f_name)
-
+plt.show()
 
 
 
@@ -152,11 +298,13 @@ map = Basemap(projection='merc', resolution='h',
 map.drawcoastlines(linewidth=0.8)
 map.fillcontinents(color='lightgrey')
 
-x,y = map(128.25, 34.5)
+x,y = map(lon[_lon], lat[_lat])
 map.plot(x, y, 'ro', alpha=0.4 ,markersize=25)  
-
-plt.show()
 
 f_name = 'study area zoom.png'
 plt.savefig(f_name, bbox_inches='tight')
 print('File Save: ' + f_name)
+plt.show()
+
+    
+'''  
