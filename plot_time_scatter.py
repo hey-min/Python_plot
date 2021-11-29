@@ -15,21 +15,31 @@ Output
 """
 
 from netCDF4 import Dataset, num2date
-from functions import read_nc
+
+file = 'sst_dataset_2007to2020.nc'
+from netCDF4 import Dataset, num2date
+nc = Dataset(file)
+    
+var = nc.variables.keys()
+print(var)
+    
+lat = nc.variables['longitude'][:]
+lon = nc.variables['latitude'][:]
+nctime = nc.variables['time'][:] # get values
+t_unit = nc.variables['time'].units # get unit  "days since 1950-01-01T00:00:00Z"
+t_cal = nc.variables['time'].calendar
+nc_time = num2date(nctime,units = t_unit,calendar = t_cal)
+sst = nc.variables['sst'][:]
 
 import pandas as pd
 import datetime as dt
 import cftime
 
-sst, lats, lons, times = read_nc()
-total_size = len(times)
-units = times.units
-dtime = num2date(times, units)
 
 df_time = pd.DataFrame(None, columns=['date', 'date_year'])
-df_time['date'] = dtime
+df_time['date'] = nc_time
 
-for i in range(total_size):
+for i in range(len(nc_time)):
     df_time['date_year'][i] = df_time['date'][i].year
     
 date_year = df_time.loc[df_time['date_year']==2019]   
@@ -83,7 +93,7 @@ def get_data(lat, lon, year):
 
 find_year = 2019
 sst_total, sst_year, date_year = get_data(lat, lon, find_year)
-print('> generate dataframe')
+# print('> generate dataframe')
 
 
     
@@ -125,8 +135,8 @@ def plot_timeSeries_year(lat, lon):
     
     plt.show()
 
-print('> plot_timeSeries_year')
-plot_timeSeries_year(lat, lon)
+# print('> plot_timeSeries_year')
+# plot_timeSeries_year(lat, lon)
 
 
 
